@@ -15,6 +15,10 @@ const config: HardhatUserConfig = {
       accounts: [process.env.PRIVATE_KEY ?? '0x0'],
       url: 'https://forno.celo.org',
     },
+    flowTestnet: {
+      accounts: [process.env.PRIVATE_KEY ?? '0x0'],
+      url: 'https://testnet.evm.nodes.onflow.org',
+    },
   },
   etherscan: {
     apiKey: {
@@ -36,6 +40,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: 'https://api.celoscan.io/api',
           browserURL: 'https://celoscan.io/',
+        },
+      },
+      {
+        chainId: 545,
+        network: 'flowTestnet',
+        urls: {
+          apiURL: 'https://evm-testnet.flowscan.io/api',
+          browserURL: 'https://evm-testnet.flowscan.io',
         },
       },
     ],
