@@ -42,8 +42,11 @@ Reward System: Points-to-NFT pipeline for real-world incentives.
 Community DAO: A governance layer for funding and decision-making.
 
 Key Contracts
-RewardManager.sol: Handles point accumulation and NFT minting.
+User.sol: Handles point accumulation and NFT minting.
 GrowDAO.sol: Governs the Noun Grow DAO and public goods allocation.
+GrowComponent.sol: Represents real products available for learning and purchase in the game. 
+OrderNFT.com:Issued when a player purchases the real-world product represented by a GrowComponentNFT. Tracks order fulfillment status.
+
 Nouns Integration
 GrowFlow integrates Noun-inspired Grow Guru characters to:
 
