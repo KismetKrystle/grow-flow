@@ -1,3 +1,16 @@
+require("@nomiclabs/hardhat-waffle");
+
+module.exports = {
+  solidity: "0.8.0",
+  networks: {
+    hardhat: {},
+    goerli: {
+      url: "https://eth-goerli.alchemyapi.io/v2/YOUR_ALCHEMY_KEY",
+      accounts: ["YOUR_PRIVATE_KEY"]
+    }
+  }
+};
+
 import '@nomicfoundation/hardhat-toolbox';
 import '@nomicfoundation/hardhat-verify';
 import { config as dotEnvConfig } from 'dotenv';
