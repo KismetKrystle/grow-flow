@@ -96,8 +96,9 @@ Roadmap
  Scale DAO activities for wider community participation.
  Wider range of hydroponic products, accesories and supplies.
  AI integration
-
- 
+ NFT distribution
+ Tokenomics
+  
 Team
 Kismet: Product Manager, Full Stack Developer
 April: UX/UI Designer, Creative Strategist.
