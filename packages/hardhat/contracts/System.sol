@@ -42,4 +42,8 @@ contract SystemNFT is ERC721URIStorage {
         require(_exists(tokenId), "Token does not exist");
         return systems[tokenId];
     }
+
+    function _exists(uint256 discountID) public view returns(bool) {
+        return discountID > 0;
+    }
 }

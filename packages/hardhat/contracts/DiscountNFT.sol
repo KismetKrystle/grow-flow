@@ -39,6 +39,10 @@ contract DiscountNFT is ERC721, Ownable {
         nextDiscountID = nextDiscountID.add(1);
     }
 
+    function _exists(uint256 discountID) public view returns(bool) {
+        return discountID > 0;
+    }
+
     // Function to apply discount to a purchase (e.g., GrowComponentNFT)
     function applyDiscount(uint256 discountID, uint256 componentID) external returns (uint256) {
         // Ensure the DiscountNFT exists and is not used

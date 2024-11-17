@@ -51,3 +51,8 @@ contract OrderNFT is ERC721URIStorage {
         require(_exists(tokenId), "Token does not exist");
         return orders[tokenId];
     }
+
+    function _exists(uint256 discountID) public view returns(bool) {
+        return discountID > 0;
+    }
+}

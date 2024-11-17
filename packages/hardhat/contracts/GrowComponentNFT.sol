@@ -54,6 +54,10 @@ contract GrowComponentNFT is ERC721URIStorage {
         return components[tokenId];
     }
 
+    function _exists(uint256 discountID) public view returns(bool) {
+        return discountID > 0;
+    }
+
     // Disable availability for purchase
     function setPurchaseAvailability(uint256 tokenId, bool status) public onlyOwner {
         require(_exists(tokenId), "Token does not exist");
