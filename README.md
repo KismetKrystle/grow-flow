@@ -25,6 +25,8 @@ Earn Points: Successfully complete interactive tasks to earn points and blockcha
 Unlock Rewards: Redeem NFTs for in-app features or discounts on hydroponics products.
 Grow Together: Participate in community DAO activities to fund public goods and share insights.
 
+User Flow: https://tinyurl.com/3saaxa6k
+
 Technology Stack
 Blockchain: Flow Blockchain (scalable and efficient for Web3 integration).
 Wallet: Celo for wallet and sign-in functionality.
