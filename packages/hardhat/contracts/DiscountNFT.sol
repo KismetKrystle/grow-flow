@@ -1,79 +1,60 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-
-contract DiscountNFT is ERC721, Ownable {
-
-    // Structure to hold details for each DiscountNFT
+contract DiscountNFT {
     struct Discount {
-        uint256 discountValue;    // Discount value as a percentage (e.g., 500 for 5%)
-        uint256 associatedComponentID; // ID of the associated GrowComponentNFT
-        bool isUsed; // To track if the discount has been applied
+        uint256 discountValue;       // Discount percentage (e.g., 500 for 5%)
+        uint256 associatedComponentID; // Associated GrowComponentNFT ID
+        bool isUsed;                // If the discount is applied
     }
 
-    // Mapping from DiscountNFT ID to Discount data
     mapping(uint256 => Discount) public discounts;
+    mapping(uint256 => address) public owners;
+    mapping(address => uint256) public balances;
 
-    uint256 public nextDiscountID; // To track the next DiscountNFT ID
+    uint256 public nextDiscountID;
+    address public owner;
 
-    // Event to emit when a discount is applied
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Not the contract owner");
+        _;
+    }
+
     event DiscountApplied(uint256 discountID, uint256 componentID, uint256 discountValue, address user);
 
-    // Constructor
-    constructor() ERC721("DiscountNFT", "DNFT") {}
+    constructor() {
+        owner = msg.sender;
+    }
 
-    // Function to mint a new DiscountNFT
     function mintDiscountNFT(address to, uint256 discountValue, uint256 associatedComponentID) external onlyOwner {
-        uint256 discountID = nextDiscountID;
-        _mint(to, discountID);
+        uint256 discountID = nextDiscountID++;
+        owners[discountID] = to;
+        balances[to]++;
 
-        // Store the discount data
         discounts[discountID] = Discount({
             discountValue: discountValue,
             associatedComponentID: associatedComponentID,
             isUsed: false
         });
-
-        nextDiscountID = nextDiscountID.add(1);
     }
 
-    function _exists(uint256 discountID) public view returns(bool) {
-        return discountID > 0;
-    }
-
-    // Function to apply discount to a purchase (e.g., GrowComponentNFT)
     function applyDiscount(uint256 discountID, uint256 componentID) external returns (uint256) {
-        // Ensure the DiscountNFT exists and is not used
-        require(_exists(discountID), "DiscountNFT does not exist");
-        require(discounts[discountID].isUsed == false, "Discount already used");
+        require(owners[discountID] == msg.sender, "Not the owner of this discount");
+        require(!discounts[discountID].isUsed, "Discount already used");
+        require(discounts[discountID].associatedComponentID == componentID, "Invalid component ID");
 
-        // Ensure that the discount is applied to the correct GrowComponentNFT
-        require(discounts[discountID].associatedComponentID == componentID, "Discount can only be applied to the associated component");
-
-        // Mark the discount as used
         discounts[discountID].isUsed = true;
+        emit DiscountApplied(discountID, componentID, discounts[discountID].discountValue, msg.sender);
 
-        // Calculate the discount amount and apply it to the price (percentage-based)
-        uint256 discountValue = discounts[discountID].discountValue;
-        emit DiscountApplied(discountID, componentID, discountValue, msg.sender);
-
-        // Return the discount value that can be used to reduce the total price (in cents or a smaller unit)
-        return discountValue;
+        return discounts[discountID].discountValue;
     }
 
-    // Function to check the discount details
-    function getDiscountDetails(uint256 discountID) external view returns (uint256 discountValue, uint256 associatedComponentID, bool isUsed) {
-        require(_exists(discountID), "DiscountNFT does not exist");
-        Discount memory discount = discounts[discountID];
-        return (discount.discountValue, discount.associatedComponentID, discount.isUsed);
-    }
-
-    // Function to destroy a DiscountNFT after it has been used
     function burnDiscountNFT(uint256 discountID) external onlyOwner {
-        require(_exists(discountID), "DiscountNFT does not exist");
-        _burn(discountID);
+        address tokenOwner = owners[discountID];
+        require(tokenOwner != address(0), "Invalid discount ID");
+
+        delete discounts[discountID];
+        delete owners[discountID];
+        balances[tokenOwner]--;
     }
 }
-

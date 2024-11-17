@@ -1,76 +1,54 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-
-contract GrowComponentNFT is ERC721URIStorage {
-    address public owner; // Contract owner
-    uint256 public nextTokenId = 1;
-
-    struct ComponentData {
-        string name;
-        string description;
-        string specs;
-        uint256 price; // Price in Wei
-        bool availableForPurchase;
+contract GrowComponentNFT {
+    struct Component {
+        uint256 id;
+        string metadata;
     }
 
-    mapping(uint256 => ComponentData) public components;
+    mapping(uint256 => Component) public components;
+    mapping(uint256 => address) public owners;
+    mapping(address => uint256) public balances;
+
+    uint256 public nextComponentID;
+    address public owner;
 
     modifier onlyOwner() {
-        require(msg.sender == owner, "Not authorized");
+        require(msg.sender == owner, "Not the contract owner");
         _;
     }
 
-    constructor() ERC721("GrowComponentNFT", "GCNFT") {
+    constructor() {
         owner = msg.sender;
     }
 
-    // Add a new grow component
-    function addGrowComponent(
-        string memory _name,
-        string memory _description,
-        string memory _specs,
-        uint256 _price
-    ) public onlyOwner {
-        components[nextTokenId] = ComponentData(
-            _name,
-            _description,
-            _specs,
-            _price,
-            true
-        );
-        _mint(owner, nextTokenId);
-        nextTokenId++;
+    function mintComponent(address to, string memory metadata) external onlyOwner {
+        uint256 componentID = nextComponentID++;
+        owners[componentID] = to;
+        balances[to]++;
+
+        components[componentID] = Component({
+            id: componentID,
+            metadata: metadata
+        });
     }
 
-    // Retrieve component details
-    function getComponentDetails(uint256 tokenId)
-        public
-        view
-        returns (ComponentData memory)
-    {
-        require(_exists(tokenId), "Token does not exist");
-        return components[tokenId];
+    function transferComponent(uint256 componentID, address to) external {
+        require(owners[componentID] == msg.sender, "Not the owner of this component");
+
+        address currentOwner = owners[componentID];
+        balances[currentOwner]--;
+        balances[to]++;
+        owners[componentID] = to;
     }
 
-    function _exists(uint256 discountID) public view returns(bool) {
-        return discountID > 0;
-    }
+    function burnComponent(uint256 componentID) external onlyOwner {
+        address tokenOwner = owners[componentID];
+        require(tokenOwner != address(0), "Invalid component ID");
 
-    // Disable availability for purchase
-    function setPurchaseAvailability(uint256 tokenId, bool status) public onlyOwner {
-        require(_exists(tokenId), "Token does not exist");
-        components[tokenId].availableForPurchase = status;
-    }
-
-    // Prevent transfers
-    function _transfer(
-        address from,
-        address to,
-        uint256 tokenId
-    ) internal pure override {
-        require(false, "Transfer not allowed");
+        delete components[componentID];
+        delete owners[componentID];
+        balances[tokenOwner]--;
     }
 }
-

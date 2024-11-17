@@ -1,49 +1,57 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "./GrowComponentNFT.sol";
+import "./DiscountNFT.sol";
+import "./OrderNFT.sol";
 
-contract SystemNFT is ERC721URIStorage {
+contract Marketplace {
+    GrowComponentNFT public growComponentNFT;
+    DiscountNFT public discountNFT;
+    OrderNFT public orderNFT;
+
+    mapping(uint256 => uint256) public prices;
+    mapping(uint256 => bool) public isAvailable;
+
     address public owner;
-    uint256 public nextTokenId = 1;
-
-    struct SystemData {
-        uint256 orderId; // Associated OrderNFT ID
-        string upgrades; // Optional upgrades or additional data
-    }
-
-    mapping(uint256 => SystemData) public systems;
 
     modifier onlyOwner() {
-        require(msg.sender == owner, "Not authorized");
+        require(msg.sender == owner, "Not the contract owner");
         _;
     }
 
-    constructor() ERC721("SystemNFT", "SNFT") {
+    event ItemPurchased(address buyer, uint256 componentID, uint256 finalPrice);
+
+    constructor(address _growComponentNFT, address _discountNFT, address _orderNFT) {
         owner = msg.sender;
+        growComponentNFT = GrowComponentNFT(_growComponentNFT);
+        discountNFT = DiscountNFT(_discountNFT);
+        orderNFT = OrderNFT(_orderNFT);
     }
 
-    // Mint a SystemNFT after order is fulfilled
-    function createSystemNFT(uint256 orderId, address buyer, string memory upgrades)
-        public
-        onlyOwner
-    {
-        systems[nextTokenId] = SystemData(orderId, upgrades);
-        _mint(buyer, nextTokenId);
-        nextTokenId++;
+    function setPrice(uint256 componentID, uint256 price) external onlyOwner {
+        require(growComponentNFT.owners(componentID) == address(0), "Component must not be owned");
+        prices[componentID] = price;
+        isAvailable[componentID] = true;
     }
 
-    // Get system details
-    function getSystemDetails(uint256 tokenId)
-        public
-        view
-        returns (SystemData memory)
-    {
-        require(_exists(tokenId), "Token does not exist");
-        return systems[tokenId];
-    }
+    function purchaseItem(uint256 componentID, uint256 discountID) external payable {
+        require(isAvailable[componentID], "Component not available");
+        uint256 price = prices[componentID];
 
-    function _exists(uint256 discountID) public view returns(bool) {
-        return discountID > 0;
+        if (discountID > 0) {
+            uint256 discount = discountNFT.applyDiscount(discountID, componentID);
+            price = price - (price * discount / 10000);
+        }
+
+        require(msg.value >= price, "Insufficient funds");
+
+        isAvailable[componentID] = false;
+        growComponentNFT.transferComponent(componentID, msg.sender);
+        orderNFT.mintOrderNFT(msg.sender, componentID, price);
+
+        payable(owner).transfer(price);
+
+        emit ItemPurchased(msg.sender, componentID, price);
     }
 }

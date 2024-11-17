@@ -1,58 +1,47 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-
-contract OrderNFT is ERC721URIStorage {
-    address public owner;
-    uint256 public nextTokenId = 1;
-
-    struct OrderData {
-        uint256 componentId; // ID of the GrowComponentNFT
-        address buyer;
-        bool fulfilled;
+contract OrderNFT {
+    struct Order {
+        uint256 orderID;
+        uint256 componentID;
+        uint256 price;
     }
 
-    mapping(uint256 => OrderData) public orders;
+    mapping(uint256 => Order) public orders;
+    mapping(uint256 => address) public owners;
+    mapping(address => uint256) public balances;
+
+    uint256 public nextOrderID;
+    address public owner;
 
     modifier onlyOwner() {
-        require(msg.sender == owner, "Not authorized");
+        require(msg.sender == owner, "Not the contract owner");
         _;
     }
 
-    constructor() ERC721("OrderNFT", "ONFT") {
+    constructor() {
         owner = msg.sender;
     }
 
-    // Issue an OrderNFT
-    function createOrderNFT(uint256 componentId, address buyer)
-        public
-        onlyOwner
-        returns (uint256)
-    {
-        orders[nextTokenId] = OrderData(componentId, buyer, false);
-        _mint(buyer, nextTokenId);
-        nextTokenId++;
-        return nextTokenId - 1;
+    function mintOrderNFT(address to, uint256 componentID, uint256 price) external onlyOwner {
+        uint256 orderID = nextOrderID++;
+        owners[orderID] = to;
+        balances[to]++;
+
+        orders[orderID] = Order({
+            orderID: orderID,
+            componentID: componentID,
+            price: price
+        });
     }
 
-    // Mark order as fulfilled
-    function fulfillOrder(uint256 tokenId) public onlyOwner {
-        require(_exists(tokenId), "Token does not exist");
-        orders[tokenId].fulfilled = true;
-    }
+    function burnOrderNFT(uint256 orderID) external onlyOwner {
+        address tokenOwner = owners[orderID];
+        require(tokenOwner != address(0), "Invalid order ID");
 
-    // Get order details
-    function getOrderDetails(uint256 tokenId)
-        public
-        view
-        returns (OrderData memory)
-    {
-        require(_exists(tokenId), "Token does not exist");
-        return orders[tokenId];
-    }
-
-    function _exists(uint256 discountID) public view returns(bool) {
-        return discountID > 0;
+        delete orders[orderID];
+        delete owners[orderID];
+        balances[tokenOwner]--;
     }
 }
